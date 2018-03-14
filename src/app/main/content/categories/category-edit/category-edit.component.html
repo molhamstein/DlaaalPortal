@@ -1,0 +1,180 @@
+<div id="product" class="page-layout carded fullwidth" fusePerfectScrollbar>
+
+  <!-- TOP BACKGROUND -->
+  <div class="top-bg mat-accent-bg"></div>
+  <!-- / TOP BACKGROUND -->
+
+  <!-- CENTER -->
+  <div class="center">
+
+    <!-- HEADER -->
+    <div class="header white-fg" fxLayout="row" fxLayoutAlign="space-between center">
+
+      <!-- APP TITLE -->
+      <div fxLayout="row" fxLayoutAlign="start center">
+
+        <button class="mr-0 mr-sm-16" mat-icon-button [routerLink]="'/categories'">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <div fxLayout="column" fxLayoutAlign="start start" *fuseIfOnDom
+             [@animate]="{value:'*',params:{delay:'100ms',x:'-25px'}}">
+          <div class="h2" *ngIf="isEditMode">
+            {{categoryForm.value.title}}
+          </div>
+          <div class="h2" *ngIf="!isEditMode">
+            New Category
+          </div>
+          <div class="subtitle secondary-text">
+            <span>Category Details</span>
+          </div>
+        </div>
+      </div>
+      <!-- / APP TITLE -->
+
+      <button mat-raised-button class="save-product-button mat-white-bg mt-16 mt-sm-0"
+              [disabled]="categoryForm.status == 'INVALID'"
+              (click)="f.ngSubmit.emit()">
+        <span>SAVE</span>
+      </button>
+
+      <button mat-raised-button class="save-product-button mat-white-bg mt-16 mt-sm-0"
+              (click)="printt(categoryForm)">
+        <span>ss</span>
+      </button>
+    </div>
+    <!-- / HEADER -->
+
+    <!-- CONTENT CARD -->
+    <div class="content-card mat-white-bg">
+
+      <!-- CONTENT -->
+      <div class="content">
+        <form [formGroup]="categoryForm" novalidate (ngSubmit)="onSubmit(f)" #f="ngForm" class="product w-100-p" fxLayout="column" fxFlex>
+          <mat-tab-group (selectedTabChange)="tabChanged($event)">
+            <mat-tab label="Basic Info">
+              <div fxLayout="row" fxLayout.xs="column">
+                <div class="tab-content p-24" fusePerfectScrollbar fxFlex="70%">
+                  <div fxLayout="row" fxLayoutAlign="start start">
+                    <mat-icon class="mr-12 mt-12">group_work</mat-icon>
+                    <mat-form-field class="w-100-p">
+                      <input type="text" matInput formControlName="title" name="title" placeholder="Title" required>
+                      <mat-error *ngIf="categoryForm.controls.title.invalid">{{getErrorMessage('title','required','')}}
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div class="p-4" fxLayout="column" fxLayoutGap="3px" fxFlex="25%">
+                  <img *ngIf="photo != ''" [src]="photo" >
+                  <img *ngIf="photo == ''" [src]="defaultImage">
+                  <input type="file" accept="image/*" #file name="image" fxHide (change)="onFileChange($event)">
+                  <button type="button" mat-raised-button color="primary" (click)="browseProfilePicture()">Browse</button>
+                  <button type="button" mat-raised-button color="warn" (click)="removeFile()">Remove</button>
+                </div>
+              </div>
+            </mat-tab>
+            <mat-tab label="Sub-Categories" *ngIf="isEditMode">
+              <div fxLayout="row" fxLayout.xs="column">
+                <div class="tab-content p-24" fusePerfectScrollbar fxFlex>
+                  <div fxLayout="row" fxLayoutAlign="end end">
+                    <button mat-button type="button" color="warn" *ngIf="isEditMode"
+                            (click)="deleteAllSubCategories()">Delete All Sub-Categories
+                    </button>
+                  </div>
+                  <mat-accordion>
+                    <mat-expansion-panel *ngFor="let sub of subCategories, let num = index"
+                                         (opened)="setSelectedForm(sub)"
+                                         [expanded]="selectedForm && selectedForm.value.id === sub.value.id && panelOpened">
+                      <mat-expansion-panel-header>
+                        <mat-panel-title>
+                        <h3 class="text-bold"> {{sub.value.title}}</h3>
+                        </mat-panel-title>
+                        <mat-panel-description>
+                          <!--Edit Sub-Category-->
+                        </mat-panel-description>
+                      </mat-expansion-panel-header>
+                      <div *ngIf="selectedForm">
+                        <form [formGroup]="selectedForm" novalidate (ngSubmit)="onSubmit(selectedForm)">
+                          <mat-form-field>
+                            <input matInput formControlName="title" placeholder="title">
+                          </mat-form-field>
+                          <div formArrayName="fields" *ngIf="selectedForm.controls.fields">
+                            <div *ngFor="let field of getSubCategoryFields(sub); let i = index">
+                              <div [formGroupName]="i" fxLayout="row" fxLayoutGap="2rem">
+                                <mat-form-field class="w-100-p" fxFlex="30%" fxFlex="20%">
+                                  <input matInput name="fieldkey" placeholder="Field Key"   formControlName="key" required>
+                                </mat-form-field>
+                                <mat-form-field class="w-100-p" *ngIf="field.controls.type.value === 'text' || field.controls.type.value === 'choose'" fxFlex="20%">
+                                  <input  matInput name="fieldkey" placeholder="Field Value" formControlName="value">
+                                </mat-form-field>
+                                <mat-form-field class="w-100-p" *ngIf="field.controls.type.value === 'number'" fxFlex="20%">
+                                  <input type="number" matInput name="fieldkey" placeholder="Field Value" formControlName="value">
+                                </mat-form-field>
+                                <mat-form-field class="w-100-p" fxFlex="20%">
+                                  <mat-select placeholder="Field Type" name="fieldtype" formControlName="type"
+                                              ([value])="field.controls.type.value"
+                                              (change)="selectFieldType( field.controls.type.value, field, i)">
+                                    <mat-option value="text">Text</mat-option>
+                                    <mat-option value="number">Number</mat-option>
+                                    <mat-option value="choose">Select</mat-option>
+                                  </mat-select>
+                                </mat-form-field>
+                                <!--<div fxLayout="column">-->
+                                <div  *ngIf="field.controls.type.value === 'choose' && field.controls.values" fxLayout="column"
+                                      formArrayName="values">
+                                  <div  *ngFor="let vv of field.controls.values.controls; let j = index ">
+                                    <div fxLayout="row">
+                                      <mat-form-field class="w-100-p">
+                                        <input matInput name="fieldvalue" placeholder="Value" [formControlName]="j">
+                                      </mat-form-field>
+                                      <button type="button" mat-icon-button color="warn" (click)="removeValue(i, j)">
+                                        <mat-icon aria-label="remove">close</mat-icon>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <button type="button" mat-icon-button color="accent" (click)="addValue(i)">
+                                    <mat-icon aria-label="addd">add</mat-icon>
+                                  </button>
+                                </div>
+                                <!--</div>-->
+                                <button type="button" mat-icon-button color="warn" (click)="removeField(i)">
+                                  <mat-icon aria-label="remove">close</mat-icon>
+                                </button>
+                              </div>
+                            </div>
+
+                          </div>
+                        </form>
+                      </div>
+                      <button type="button" mat-icon-button color="accent" (click)="addField()">
+                        <mat-icon aria-label="addd">add</mat-icon>
+                      </button>
+                      <mat-action-row *ngIf="selectedForm">
+                        <button mat-button color="accent" type="button" *ngIf="isEditMode"
+                                [disabled]="(selectedForm.value.id === sub.value.id
+                                && selectedForm.status === 'INVALID')
+                                ||(selectedForm.controls.fields && selectedForm.controls.fields.pristine === true)
+                                || (selectedForm.controls.fields && selectedForm.controls.fields.status === 'INVALID')"
+                                (click)="saveSubCategory()">Save
+                        </button>
+                        <!---->
+                        <button mat-button type="button" color="warn" *ngIf="isEditMode"
+                                (click)="deleteSubCategory(sub)">Delete
+                        </button>
+                      </mat-action-row>
+                    </mat-expansion-panel>
+                  </mat-accordion>
+                  <button mat-icon-button type="button" color="primary" (click)="addNewSubCategory()">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </mat-tab>
+
+          </mat-tab-group>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
