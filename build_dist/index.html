@@ -230,7 +230,11 @@
   <!-- / FUSE Splash Screen -->
 
   <fuse-root></fuse-root>
-
+  <script>
+    if (global === undefined) {
+      var global = window;
+    }
+  </script>
   <script type="text/javascript" src="runtime.a361f8a1dfb20adbd52c.js"></script>
   <script type="text/javascript" src="polyfills.be4ca351071ea6e6150b.js"></script>
   <script type="text/javascript" src="main.4218ae19d5a47489cecc.js"></script>
